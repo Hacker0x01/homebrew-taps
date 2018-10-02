@@ -43,7 +43,7 @@ class PostgresqlAT104 < Formula
     args = %W[
       --disable-debug
       --prefix=#{prefix}
-      --datadir=#{HOMEBREW_PREFIX}/share/postgresql
+      --datadir=#{HOMEBREW_PREFIX}/share/#{name}
       --libdir=#{HOMEBREW_PREFIX}/lib
       --sysconfdir=#{etc}
       --docdir=#{doc}
@@ -122,9 +122,9 @@ class PostgresqlAT104 < Formula
 
   def post_install
     (var/"log").mkpath
-    (var/"postgres").mkpath
-    unless File.exist? "#{var}/postgres/PG_VERSION"
-      system "#{bin}/initdb", "#{var}/postgres"
+    (var/name).mkpath
+    unless File.exist? "#{var}/#{name}/PG_VERSION"
+      system "#{bin}/initdb", "#{var}/#{name}"
     end
   end
 
@@ -134,7 +134,7 @@ class PostgresqlAT104 < Formula
   EOS
   end
 
-  plist_options :manual => "pg_ctl -D #{HOMEBREW_PREFIX}/var/postgres start"
+  plist_options :manual => "pg_ctl -D #{HOMEBREW_PREFIX}/var/postgresql@10.4 start"
 
   def plist; <<~EOS
     <?xml version="1.0" encoding="UTF-8"?>
@@ -147,18 +147,18 @@ class PostgresqlAT104 < Formula
       <string>#{plist_name}</string>
       <key>ProgramArguments</key>
       <array>
-        <string>#{opt_bin}/postgres</string>
+        <string>#{opt_bin}/#{name}</string>
         <string>-D</string>
-        <string>#{var}/postgres</string>
+        <string>#{var}/#{name}</string>
       </array>
       <key>RunAtLoad</key>
       <true/>
       <key>WorkingDirectory</key>
       <string>#{HOMEBREW_PREFIX}</string>
       <key>StandardOutPath</key>
-      <string>#{var}/log/postgres.log</string>
+      <string>#{var}/log/#{name}.log</string>
       <key>StandardErrorPath</key>
-      <string>#{var}/log/postgres.log</string>
+      <string>#{var}/log/#{name}.log</string>
     </dict>
     </plist>
   EOS
@@ -166,8 +166,8 @@ class PostgresqlAT104 < Formula
 
   test do
     system "#{bin}/initdb", testpath/"test"
-    assert_equal "#{HOMEBREW_PREFIX}/share/postgresql", shell_output("#{bin}/pg_config --sharedir").chomp
+    assert_equal "#{HOMEBREW_PREFIX}/share/#{name} shell_output("#{bin}/pg_config --sharedir").chomp
     assert_equal "#{HOMEBREW_PREFIX}/lib", shell_output("#{bin}/pg_config --libdir").chomp
-    assert_equal "#{HOMEBREW_PREFIX}/lib/postgresql", shell_output("#{bin}/pg_config --pkglibdir").chomp
+    assert_equal "#{HOMEBREW_PREFIX}/lib/#{name}", shell_output("#{bin}/pg_config --pkglibdir").chomp
   end
 end
