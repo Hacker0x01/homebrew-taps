@@ -6,12 +6,6 @@ class PostgresqlAT104 < Formula
   revision 1
   head "https://github.com/postgres/postgres.git"
 
-  bottle do
-    sha256 "9f0a80f2025a4420a103ffcb7fca5a0ac4410033785e49efc3ff3ec5878cb977" => :high_sierra
-    sha256 "d43f53584da3c826f75e35424b5b52385bfdc3d0743d99bb32bb58e18e45d3ef" => :sierra
-    sha256 "e1639a44f998836939404477d956f500a0f678274591a044a8e6d8d1364c3466" => :el_capitan
-  end
-
   option "without-perl", "Build without Perl support"
   option "without-tcl", "Build without Tcl support"
   option "with-dtrace", "Build with DTrace support"
@@ -106,9 +100,24 @@ class PostgresqlAT104 < Formula
 
     system "./configure", *args
     system "make"
-    system "make", "install-world", "datadir=#{pkgshare}",
-                                    "libdir=#{lib}",
-                                    "pkglibdir=#{lib}/postgresql"
+
+    dirs = %W[datadir=#{pkgshare} libdir=#{lib} pkglibdir=#{lib}/postgresql]
+
+    # Temporarily disable building/installing the documentation.
+    # Postgresql seems to "know" the build system has been altered and
+    # tries to regenerate the documentation when using `install-world`.
+    # This results in the build failing:
+    #  `ERROR: `osx' is missing on your system.`
+    # Attempting to fix that by adding a dependency on `open-sp` doesn't
+    # work and the build errors out on generating the documentation, so
+    # for now let's simply omit it so we can package Postgresql for Mojave.
+    if DevelopmentTools.clang_build_version >= 1000
+      system "make", "all"
+      system "make", "-C", "contrib", "install", "all", *dirs
+      system "make", "install", "all", *dirs
+    else
+      system "make", "install-world", *dirs
+    end
   end
 
   def post_install
